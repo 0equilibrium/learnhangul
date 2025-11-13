@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:math';
+
+import 'design_system.dart';
 import 'models.dart';
 import 'widgets.dart';
 
@@ -37,29 +39,31 @@ class _VowelLearningScreenState extends State<VowelLearningScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('모음 학습')),
+      appBar: LearnHangulAppBar('모음학습'),
       body: Column(
         children: [
           Expanded(
-            child: ListView(
+            child: SingleChildScrollView(
               padding: const EdgeInsets.fromLTRB(0, 20, 0, 32),
-              children: [
-                for (final section in vowelSections)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 20),
-                    child: HangulSectionCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  for (final section in vowelSections)
+                    HangulSectionCard(
                       section: section,
                       onCharacterTap: (character) =>
                           showCharacterDetails(context, character),
                       correctCounts: _correctCounts ?? {},
                     ),
-                  ),
-              ],
+                ],
+              ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: LiquidGlassButton(
+              label: '훈련하기',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -69,7 +73,6 @@ class _VowelLearningScreenState extends State<VowelLearningScreen> {
                   ),
                 );
               },
-              child: const Text('훈련하기'),
             ),
           ),
         ],
@@ -111,7 +114,7 @@ class _ConsonantLearningScreenState extends State<ConsonantLearningScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('자음 학습')),
+      appBar: LearnHangulAppBar('자음 학습'),
       body: Column(
         children: [
           Expanded(
@@ -132,8 +135,9 @@ class _ConsonantLearningScreenState extends State<ConsonantLearningScreen> {
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: ElevatedButton(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
+            child: LiquidGlassButton(
+              label: '훈련하기',
               onPressed: () {
                 Navigator.push(
                   context,
@@ -143,7 +147,6 @@ class _ConsonantLearningScreenState extends State<ConsonantLearningScreen> {
                   ),
                 );
               },
-              child: const Text('훈련하기'),
             ),
           ),
         ],
@@ -152,14 +155,132 @@ class _ConsonantLearningScreenState extends State<ConsonantLearningScreen> {
   }
 }
 
-class SettingsScreen extends StatelessWidget {
+class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
 
   @override
+  State<SettingsScreen> createState() => _SettingsScreenState();
+}
+
+class _SettingsScreenState extends State<SettingsScreen> {
+  bool _reminderEnabled = true;
+  bool _ttsHintsEnabled = true;
+
+  void _toggleReminder(bool value) {
+    setState(() => _reminderEnabled = value);
+    LearnHangulSnackbar.show(
+      context,
+      message: value ? '매일 저녁 알림을 켰어요.' : '알림을 잠시 쉬고 있어요.',
+      tone: value ? LearnHangulSnackTone.success : LearnHangulSnackTone.warning,
+    );
+  }
+
+  void _toggleTts(bool value) {
+    setState(() => _ttsHintsEnabled = value);
+  }
+
+  void _confirmReset() {
+    showDialog(
+      context: context,
+      builder: (_) => LearnHangulDialog(
+        title: '학습 데이터 초기화',
+        message: '맞힌 기록과 음절 진행도가 모두 삭제됩니다. 계속할까요?',
+        variant: LearnHangulDialogVariant.danger,
+        actions: [
+          LearnHangulDialogAction(label: '취소'),
+          LearnHangulDialogAction(
+            label: '초기화',
+            isPrimary: true,
+            onTap: () {
+              LearnHangulSnackbar.show(
+                context,
+                message: '데이터를 초기화했어요.',
+                tone: LearnHangulSnackTone.danger,
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final typography = LearnHangulTheme.typographyOf(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('설정')),
-      body: const Center(child: Text('hello world')),
+      appBar: LearnHangulAppBar('설정'),
+      body: ListView(
+        padding: const EdgeInsets.fromLTRB(24, 24, 24, 32),
+        children: [
+          const LearnHangulNotice(
+            title: '진행 상황',
+            message: '연습 목표와 알림을 조정해 스스로에게 가장 잘 맞는 리듬을 만들어 보세요.',
+          ),
+          const SizedBox(height: 24),
+          LearnHangulSurface(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('학습 흐름', style: typography.subtitle),
+                const SizedBox(height: 16),
+                LearnHangulListTile(
+                  title: '저녁 리마인더',
+                  subtitle: '매일 19시에 학습 알림 받기',
+                  leading: const Icon(Icons.alarm_rounded),
+                  trailing: Switch.adaptive(
+                    value: _reminderEnabled,
+                    onChanged: _toggleReminder,
+                  ),
+                  onTap: () => _toggleReminder(!_reminderEnabled),
+                ),
+                const SizedBox(height: 12),
+                LearnHangulListTile(
+                  title: 'TTS 힌트',
+                  subtitle: '문제를 풀 때 자동으로 음성 힌트 듣기',
+                  leading: const Icon(Icons.hearing_rounded),
+                  trailing: Switch.adaptive(
+                    value: _ttsHintsEnabled,
+                    onChanged: _toggleTts,
+                  ),
+                  onTap: () => _toggleTts(!_ttsHintsEnabled),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 24),
+          LearnHangulSurface(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('계정 및 도움', style: typography.subtitle),
+                const SizedBox(height: 12),
+                LearnHangulListTile(
+                  title: '진행 데이터 초기화',
+                  subtitle: '맞힌 수와 섹션 잠금 해제를 모두 삭제합니다',
+                  leading: const Icon(Icons.delete_sweep_rounded),
+                  onTap: _confirmReset,
+                  variant: LearnHangulListTileVariant.danger,
+                ),
+                const SizedBox(height: 12),
+                LearnHangulListTile(
+                  title: '피드백 보내기',
+                  subtitle: '디자인 개선 의견 공유하기',
+                  leading: const Icon(Icons.email_outlined),
+                  trailing: const Icon(Icons.open_in_new_rounded),
+                  onTap: () {
+                    LearnHangulSnackbar.show(
+                      context,
+                      message: 'feedback@learnhangul.app 로 메일을 보내주세요.',
+                      tone: LearnHangulSnackTone.neutral,
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -220,7 +341,6 @@ class _TrainingScreenState extends State<TrainingScreen> {
       symbol: display,
       name: display,
       romanization: roman,
-      description: '',
       example: '',
       type: HangulCharacterType.vowel,
     );
@@ -437,7 +557,15 @@ class _TrainingScreenState extends State<TrainingScreen> {
       pool = _characters;
     }
 
-    final others = pool.where((c) => _getOptionValue(c) != correct).toList();
+    final others = pool.where((c) {
+      if (_getOptionValue(c) == correct) return false;
+      // For vowel sequences, only include options with the same length
+      if (_isVowelTraining &&
+          _currentQuestion!.name.length >= 2 &&
+          c.name.length != _currentQuestion!.name.length)
+        return false;
+      return true;
+    }).toList();
     others.shuffle();
     final selectedOthers = others
         .take(5)
@@ -538,19 +666,29 @@ class _TrainingScreenState extends State<TrainingScreen> {
     });
   }
 
+  void _restartSession() {
+    setState(() {
+      _totalCorrect = 0;
+      _sessionCorrectPairs.clear();
+      _startNewQuestion();
+    });
+  }
+
   void _showCompletionDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('훈련 완료!'),
-        content: Text('총 맞힌 수: $_totalCorrect, 틀린 수: $_globalWrongCount'),
+      builder: (_) => LearnHangulDialog(
+        title: '훈련 완료!',
+        message: '총 맞힌 수: $_totalCorrect, 틀린 수: $_globalWrongCount',
+        variant: LearnHangulDialogVariant.success,
         actions: [
-          TextButton(
-            onPressed: () {
+          LearnHangulDialogAction(label: '한 번 더 풀기', onTap: _restartSession),
+          LearnHangulDialogAction(
+            label: '홈으로 가기',
+            isPrimary: true,
+            onTap: () {
               Navigator.of(context).pop();
-              Navigator.of(context).pop(); // Go back to previous screen
             },
-            child: const Text('확인'),
           ),
         ],
       ),
@@ -560,17 +698,10 @@ class _TrainingScreenState extends State<TrainingScreen> {
   void _showAdDialog() {
     showDialog(
       context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('전면 광고'),
-        content: const Text('광고 표시 중...'),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-            },
-            child: const Text('확인'),
-          ),
-        ],
+      builder: (_) => const LearnHangulDialog(
+        title: '잠깐 숨 돌려요',
+        message: '집중력이 흔들릴 땐 짧은 광고나 스트레칭으로 리셋해주세요.',
+        variant: LearnHangulDialogVariant.warning,
       ),
     );
   }
@@ -581,123 +712,217 @@ class _TrainingScreenState extends State<TrainingScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    final palette = LearnHangulTheme.paletteOf(context);
+    final typography = LearnHangulTheme.typographyOf(context);
+
+    final bool canCheck = !_showResult && _selectedOption != null;
+    final bool canAdvance = _showResult && _totalCorrect < 10;
+    final String buttonLabel = !_showResult
+        ? '정답 확인'
+        : (_totalCorrect >= 10 ? '완료' : '다음 문제');
+    final VoidCallback? primaryAction = !_showResult
+        ? (canCheck ? _checkAnswer : null)
+        : (canAdvance ? _nextQuestion : null);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('훈련')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Progress bars
-            LinearProgressIndicator(
-              value: _totalCorrect / 10.0,
-              backgroundColor: Colors.grey[300],
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.blue),
-            ),
-            const SizedBox(height: 8),
-            LinearProgressIndicator(
-              value: _globalWrongCount / 5.0,
-              backgroundColor: Colors.grey[300],
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.red),
-            ),
-            const SizedBox(height: 16),
-            // Given
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: Colors.blue.shade50,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Column(
+            children: [
+              Row(
                 children: [
-                  Text(
-                    _getGivenDisplay(),
-                    style: const TextStyle(fontSize: 36),
+                  IconButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.arrow_back),
                   ),
-                  if (_currentMode!.given == GivenType.sound)
-                    IconButton(
-                      icon: const Icon(Icons.volume_up),
-                      onPressed: () => _playSound(_currentQuestion!.symbol),
-                    ),
+                  const SizedBox(width: 16),
+                  _buildProgressMeter(
+                    context: context,
+                    label: '맞힌 문제',
+                    value: _totalCorrect,
+                    goal: 10,
+                    color: palette.success,
+                  ),
+                  const SizedBox(width: 16),
+                  _buildProgressMeter(
+                    context: context,
+                    label: '실수 카운트',
+                    value: _globalWrongCount,
+                    goal: 5,
+                    color: palette.danger,
+                  ),
                 ],
               ),
-            ),
-            const SizedBox(height: 32),
-            // Choose
-            Expanded(
-              child: GridView.count(
-                crossAxisCount: 3,
-                childAspectRatio: 1.0,
-                children: _options.map((option) {
-                  Color? cardColor;
-                  if (_showResult) {
-                    if (option == _getCorrectOption()) {
-                      cardColor = Colors.green.shade100;
-                    } else if (_selectedOption == option && !_isCorrect) {
-                      cardColor = Colors.red.shade100;
-                    }
-                  } else {
-                    cardColor = _selectedOption == option
-                        ? Colors.blue.shade100
-                        : null;
-                  }
-                  return Card(
-                    color: cardColor,
-                    child: InkWell(
+              const SizedBox(height: 16),
+              LearnHangulSurface(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 32,
+                ),
+                child: Column(
+                  children: [
+                    Text(
+                      _getGivenDisplay(),
+                      style: typography.hero.copyWith(fontSize: 40),
+                    ),
+                    if (_currentMode!.given == GivenType.sound)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 16),
+                        child: LiquidGlassButton(
+                          label: '발음 다시 듣기',
+                          leading: Icon(
+                            Icons.volume_up_rounded,
+                            color: palette.primaryText,
+                          ),
+                          variant: LiquidGlassButtonVariant.secondary,
+                          expand: false,
+                          onPressed: () => _playSound(_currentQuestion!.symbol),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: GridView.builder(
+                  padding: EdgeInsets.zero,
+                  physics: const BouncingScrollPhysics(),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    mainAxisSpacing: 18,
+                    crossAxisSpacing: 18,
+                    childAspectRatio: 1.1,
+                  ),
+                  itemCount: _options.length,
+                  itemBuilder: (context, index) {
+                    final option = _options[index];
+                    return _buildOptionCard(
+                      context: context,
+                      option: option,
+                      isCorrectAnswer: option == _getCorrectOption(),
+                      isSelected: option == _selectedOption,
+                      showIcon:
+                          _currentMode!.choose == ChooseType.sound &&
+                          !_showResult,
                       onTap: _showResult
                           ? null
                           : () => _onOptionSelected(option),
-                      child: Center(
-                        child: _currentMode!.choose == ChooseType.sound
-                            ? (_showResult
-                                  ? Text(
-                                      option,
-                                      style: const TextStyle(fontSize: 36),
-                                    )
-                                  : Icon(
-                                      Icons.volume_up,
-                                      size: 40,
-                                      color: Colors.grey[800],
-                                    ))
-                            : Text(
-                                option,
-                                style: const TextStyle(fontSize: 24),
-                              ),
-                      ),
-                    ),
-                  );
-                }).toList(),
-              ),
-            ),
-            // Result
-            if (_showResult)
-              Text(
-                _isCorrect
-                    ? 'Correct!'
-                    : 'Wrong! Correct: ${_getCorrectOption()}',
-                style: TextStyle(
-                  fontSize: 24,
-                  color: _isCorrect ? Colors.green : Colors.red,
+                    );
+                  },
                 ),
               ),
-            const SizedBox(height: 16),
-            // Button
-            ElevatedButton(
-              onPressed: _selectedOption == null
-                  ? null
-                  : _showResult
-                  ? (_totalCorrect >= 10 ? null : _nextQuestion)
-                  : _checkAnswer,
-              child: Text(
-                _showResult ? (_totalCorrect >= 10 ? '완료' : '다음 문제') : '정답확인',
+              if (_showResult) ...[
+                const SizedBox(height: 12),
+                LearnHangulNotice(
+                  title: _isCorrect ? '정답이에요' : '다시 시도해요',
+                  message: _isCorrect
+                      ? '${_getCorrectOption()} 발음을 정확히 기억하고 있어요.'
+                      : '정답은 ${_getCorrectOption()} 입니다. 다음 문제에서 만회해보세요.',
+                  type: _isCorrect
+                      ? LearnHangulNoticeType.success
+                      : LearnHangulNoticeType.warning,
+                ),
+              ],
+              const SizedBox(height: 12),
+              LiquidGlassButton(
+                label: buttonLabel,
+                onPressed: primaryAction,
+                variant: LiquidGlassButtonVariant.primary,
               ),
-            ),
-            // Counts
-            Padding(
-              padding: const EdgeInsets.only(top: 16),
-              child: Text('맞힌 수: $_totalCorrect, 틀린 수: $_globalWrongCount'),
-            ),
-          ],
+            ],
+          ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildOptionCard({
+    required BuildContext context,
+    required String option,
+    required bool isCorrectAnswer,
+    required bool isSelected,
+    required bool showIcon,
+    required VoidCallback? onTap,
+  }) {
+    final palette = LearnHangulTheme.paletteOf(context);
+    final typography = LearnHangulTheme.typographyOf(context);
+
+    Color background = palette.surface;
+    Color border = palette.outline;
+    Color foreground = palette.primaryText;
+
+    if (_showResult) {
+      if (isCorrectAnswer) {
+        background = palette.success.withOpacity(0.15);
+        border = palette.success;
+        foreground = palette.success;
+      } else if (isSelected && !_isCorrect) {
+        background = palette.danger.withOpacity(0.15);
+        border = palette.danger;
+        foreground = palette.danger;
+      }
+    } else if (isSelected) {
+      background = palette.info.withOpacity(0.12);
+      border = palette.info.withOpacity(0.5);
+      foreground = palette.info;
+    }
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 240),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(28),
+        border: Border.all(color: border),
+      ),
+      child: Material(
+        type: MaterialType.transparency,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(28),
+          onTap: onTap,
+          child: Center(
+            child: showIcon
+                ? Icon(Icons.volume_up_rounded, color: foreground, size: 34)
+                : Text(
+                    option,
+                    textAlign: TextAlign.center,
+                    style: typography.heading.copyWith(color: foreground),
+                  ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildProgressMeter({
+    required BuildContext context,
+    required String label,
+    required int value,
+    required int goal,
+    required Color color,
+  }) {
+    final typography = LearnHangulTheme.typographyOf(context);
+    final palette = LearnHangulTheme.paletteOf(context);
+    final progress = (value / goal).clamp(0.0, 1.0);
+
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(label, style: typography.caption),
+          const SizedBox(height: 6),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(12),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 8,
+              backgroundColor: palette.surface,
+              color: color,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text('$value / $goal', style: typography.caption),
+        ],
       ),
     );
   }

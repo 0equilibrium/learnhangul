@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_tts/flutter_tts.dart';
+
+import 'design_system.dart';
 import 'models.dart';
-import 'utils.dart';
 
 Future<void> showCharacterDetails(
   BuildContext context,
@@ -71,48 +73,47 @@ class _LearningHeroCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = LearnHangulTheme.paletteOf(context);
+    final typography = LearnHangulTheme.typographyOf(context);
+
     return Container(
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(36),
         gradient: LinearGradient(
-          colors: [seedColor, seedColor.withValues(alpha: 0.7)],
+          colors: [seedColor.withOpacity(0.95), accentColor.withOpacity(0.75)],
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
         ),
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
-            color: Color(0x33EF476F),
-            blurRadius: 20,
-            offset: Offset(0, 10),
+            color: palette.danger.withOpacity(0.3),
+            blurRadius: 36,
+            offset: const Offset(0, 18),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            title,
-            style: theme.textTheme.titleLarge?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+          Text(title, style: typography.hero.copyWith(color: Colors.white)),
           const SizedBox(height: 6),
           Text(
             subtitle,
-            style: theme.textTheme.bodyLarge?.copyWith(color: Colors.white70),
+            style: typography.body.copyWith(
+              color: Colors.white.withOpacity(0.85),
+            ),
           ),
           const SizedBox(height: 16),
           ...practiceIdeas.map(
             (idea) => Padding(
               padding: const EdgeInsets.only(bottom: 8),
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   Container(
-                    width: 8,
-                    height: 8,
+                    width: 10,
+                    height: 10,
                     margin: const EdgeInsets.only(right: 10),
                     decoration: const BoxDecoration(
                       color: Colors.white,
@@ -122,9 +123,7 @@ class _LearningHeroCard extends StatelessWidget {
                   Expanded(
                     child: Text(
                       idea,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: Colors.white,
-                      ),
+                      style: typography.body.copyWith(color: Colors.white),
                     ),
                   ),
                 ],
@@ -149,61 +148,31 @@ class HangulSectionCard extends StatelessWidget {
   final ValueChanged<HangulCharacter> onCharacterTap;
   final Map<String, int> correctCounts;
 
-  List<Widget> _buildRowTiles(
-    List<HangulCharacter> characters,
-    ValueChanged<HangulCharacter> onTap,
-  ) {
-    List<Widget> tiles = characters
-        .map(
-          (character) => _HangulCharacterTile(
-            character: character,
-            onTap: onTap,
-            correctCount: correctCounts[character.symbol] ?? 0,
-          ),
-        )
-        .toList();
-    List<Widget> result = [];
-    for (int i = 0; i < tiles.length; i++) {
-      result.add(tiles[i]);
-      if (i < tiles.length - 1) result.add(const SizedBox(width: 12));
-    }
-    return result;
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.start,
               children: [
-                for (int i = 0; i < section.characters.length; i += 6)
+                for (final character in section.characters)
                   Padding(
-                    padding: EdgeInsets.only(
-                      bottom: i + 6 < section.characters.length ? 12 : 0,
-                    ),
-                    child: Row(
-                      children: _buildRowTiles(
-                        section.characters.sublist(
-                          i,
-                          i + 6 > section.characters.length
-                              ? section.characters.length
-                              : i + 6,
-                        ),
-                        onCharacterTap,
-                      ),
+                    padding: const EdgeInsets.only(right: 12),
+                    child: _HangulCharacterTile(
+                      character: character,
+                      onTap: onCharacterTap,
+                      correctCount: correctCounts[character.symbol] ?? 0,
                     ),
                   ),
               ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -222,43 +191,37 @@ class _HangulCharacterTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = LearnHangulTheme.paletteOf(context);
+    final typography = LearnHangulTheme.typographyOf(context);
+
     return InkWell(
       onTap: () => onTap(character),
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(20),
       child: Ink(
-        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: accentColor.withValues(alpha: 0.18),
-          borderRadius: BorderRadius.circular(18),
+          color: palette.surface,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: palette.outline),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               character.symbol,
-              style: theme.textTheme.headlineMedium?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: Colors.black,
-              ),
+              style: typography.heading.copyWith(fontSize: 30),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: 6),
             Text(
               character.romanization,
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.grey[800],
-                fontWeight: FontWeight.w600,
-              ),
+              style: typography.caption,
             ),
             const SizedBox(height: 4),
             Text(
               '$correctCount',
               textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: Colors.green[700],
-                fontWeight: FontWeight.w600,
-              ),
+              style: typography.caption.copyWith(color: palette.success),
             ),
           ],
         ),
@@ -267,14 +230,40 @@ class _HangulCharacterTile extends StatelessWidget {
   }
 }
 
-class CharacterDetailSheet extends StatelessWidget {
+class CharacterDetailSheet extends StatefulWidget {
   const CharacterDetailSheet({required this.character});
 
   final HangulCharacter character;
 
   @override
+  State<CharacterDetailSheet> createState() => _CharacterDetailSheetState();
+}
+
+class _CharacterDetailSheetState extends State<CharacterDetailSheet> {
+  late FlutterTts _flutterTts;
+
+  @override
+  void initState() {
+    super.initState();
+    _flutterTts = FlutterTts();
+    _flutterTts.setLanguage('ko-KR');
+  }
+
+  @override
+  void dispose() {
+    _flutterTts.stop();
+    super.dispose();
+  }
+
+  Future<void> _speakCharacter() async {
+    await _flutterTts.speak(widget.character.name);
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = LearnHangulTheme.paletteOf(context);
+    final typography = LearnHangulTheme.typographyOf(context);
+
     return Padding(
       padding: EdgeInsets.only(
         left: 24,
@@ -282,61 +271,50 @@ class CharacterDetailSheet extends StatelessWidget {
         top: 24,
         bottom: 24 + MediaQuery.of(context).viewPadding.bottom,
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Align(
-            child: Container(
-              width: 96,
-              height: 96,
-              decoration: BoxDecoration(
-                color: seedColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(26),
-              ),
-              child: Center(
-                child: Text(
-                  character.symbol,
-                  style: theme.textTheme.displaySmall?.copyWith(
-                    fontWeight: FontWeight.w800,
-                  ),
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Align(
+              child: Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  color: palette.surface,
+                  borderRadius: BorderRadius.circular(32),
+                  border: Border.all(color: palette.outline),
+                ),
+                child: Center(
+                  child: Text(widget.character.symbol, style: typography.hero),
                 ),
               ),
             ),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            character.name,
-            style: theme.textTheme.titleLarge?.copyWith(
-              fontWeight: FontWeight.w700,
+            const SizedBox(height: 24),
+            Text(widget.character.name, style: typography.heading),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Text(
+                  'Romanization • ${widget.character.romanization}',
+                  style: typography.body.copyWith(color: palette.info),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: Icon(Icons.volume_up_rounded, color: palette.info),
+                  onPressed: _speakCharacter,
+                  tooltip: '발음 듣기',
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            'Romanization • ${character.romanization}',
-            style: theme.textTheme.bodyLarge?.copyWith(
-              color: seedColor,
-              fontWeight: FontWeight.w600,
+            const SizedBox(height: 16),
+            _InfoRow(
+              icon: Icons.volume_up_outlined,
+              label: '예시 단어',
+              value: widget.character.example,
             ),
-          ),
-          const SizedBox(height: 16),
-          Text(character.description, style: theme.textTheme.bodyMedium),
-          const SizedBox(height: 16),
-          _InfoRow(
-            icon: Icons.volume_up_outlined,
-            label: '예시 단어',
-            value: character.example,
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '연습 팁',
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(buildPracticeTip(character), style: theme.textTheme.bodyMedium),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -355,11 +333,12 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final palette = LearnHangulTheme.paletteOf(context);
+    final typography = LearnHangulTheme.typographyOf(context);
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: seedColor),
+        Icon(icon, color: palette.info),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
@@ -367,13 +346,10 @@ class _InfoRow extends StatelessWidget {
             children: [
               Text(
                 label,
-                style: theme.textTheme.labelMedium?.copyWith(
-                  color: Colors.grey[700],
-                  fontWeight: FontWeight.w600,
-                ),
+                style: typography.caption.copyWith(color: palette.mutedText),
               ),
               const SizedBox(height: 4),
-              Text(value, style: theme.textTheme.bodyMedium),
+              Text(value, style: typography.body),
             ],
           ),
         ),

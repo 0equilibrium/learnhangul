@@ -13,7 +13,7 @@ void main() {
   testWidgets('renders study screens', (tester) async {
     await tester.pumpWidget(const LearnHangulApp());
 
-    await tester.tap(find.text('자음'));
+    await tester.tap(find.text('자음 리듬 익히기'));
     await tester.pumpAndSettle();
 
     expect(find.text('자음 학습'), findsOneWidget);
@@ -24,7 +24,7 @@ void main() {
     await tester.pageBack();
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('모음'));
+    await tester.tap(find.text('모음 마스터하기'));
     await tester.pumpAndSettle();
 
     expect(find.text('모음 학습'), findsOneWidget);
