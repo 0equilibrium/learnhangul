@@ -1,3 +1,4 @@
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 
@@ -37,7 +38,7 @@ class HangulTabContent extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 24),
       children: [
         _LearningHeroCard(
           title: heroTitle,
@@ -47,7 +48,7 @@ class HangulTabContent extends StatelessWidget {
         const SizedBox(height: 24),
         for (final section in sections)
           Padding(
-            padding: const EdgeInsets.only(bottom: 20),
+            padding: const EdgeInsets.only(bottom: 4),
             child: HangulSectionCard(
               section: section,
               onCharacterTap: (character) =>
@@ -151,7 +152,7 @@ class HangulSectionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.zero,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -162,7 +163,8 @@ class HangulSectionCard extends StatelessWidget {
               children: [
                 for (final character in section.characters)
                   Padding(
-                    padding: const EdgeInsets.only(right: 12),
+                    // 줄 간격을 줄였습니다.
+                    padding: const EdgeInsets.only(right: 4),
                     child: _HangulCharacterTile(
                       character: character,
                       onTap: onCharacterTap,
@@ -189,39 +191,84 @@ class _HangulCharacterTile extends StatelessWidget {
   final ValueChanged<HangulCharacter> onTap;
   final int correctCount;
 
+  /// Calculate button background color based on correct count.
+  /// 0 -> current surface color
+  /// 7+ -> 100% blue (#2196F3)
+  /// 1-6 -> proportional blend between surface and blue
+  Color _getBackgroundColor(Color surfaceColor, Color blueColor) {
+    if (correctCount == 0) {
+      return surfaceColor;
+    }
+
+    // Calculate progress: each step from 1-7 is 1/7 (≈14.3%)
+    // At 7+, we're at 100%
+    final progress = (correctCount / 7).clamp(0.0, 1.0);
+
+    // Interpolate between surface color and blue
+    return Color.lerp(surfaceColor, blueColor, progress) ?? surfaceColor;
+  }
+
   @override
   Widget build(BuildContext context) {
     final palette = LearnHangulTheme.paletteOf(context);
     final typography = LearnHangulTheme.typographyOf(context);
 
-    return InkWell(
-      onTap: () => onTap(character),
-      borderRadius: BorderRadius.circular(20),
-      child: Ink(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+    final backgroundColor = _getBackgroundColor(
+      palette.surface,
+      palette.warning,
+    );
+
+    // 한글 문자와 로마자 표기는 항상 기본 색상 유지
+    final textColor = palette.primaryText;
+    final captionColor = palette.mutedText;
+
+    return CupertinoButton(
+      padding: EdgeInsets.zero,
+      onPressed: () => onTap(character),
+      child: Container(
+        // 모음 카드는 정사각형으로 고정된 크기를 사용합니다.
+        width: 64,
+        height: 72,
         decoration: BoxDecoration(
-          color: palette.surface,
-          borderRadius: BorderRadius.circular(20),
+          color: backgroundColor,
+          // 곡률을 줄였습니다.
+          borderRadius: BorderRadius.circular(8),
           border: Border.all(color: palette.outline),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
+            // 우측 상단에 정답 횟수
+            Align(
+              alignment: Alignment.topRight,
+              child: Padding(
+                padding: const EdgeInsets.only(right: 4, top: 2),
+                child: Text(
+                  '$correctCount',
+                  style: typography.caption.copyWith(
+                    color: captionColor,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+
+            // 한글 문자
             Text(
               character.symbol,
-              style: typography.heading.copyWith(fontSize: 30),
+              style: typography.heading.copyWith(
+                fontSize: 22,
+                color: textColor,
+              ),
             ),
-            const SizedBox(height: 6),
+
+            // 로마자 (간격 줄임)
             Text(
               character.romanization,
               textAlign: TextAlign.center,
-              style: typography.caption,
-            ),
-            const SizedBox(height: 4),
-            Text(
-              '$correctCount',
-              textAlign: TextAlign.center,
-              style: typography.caption.copyWith(color: palette.success),
+              style: typography.caption.copyWith(color: captionColor),
             ),
           ],
         ),

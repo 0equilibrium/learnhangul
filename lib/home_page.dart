@@ -20,8 +20,11 @@ class LearnHangulHomePage extends StatelessWidget {
         children: [
           const SizedBox(height: 28),
           LiquidGlassButton(
-            label: '모음 마스터하기',
-            leading: Icon(Icons.auto_fix_high_rounded, color: iconColor),
+            label: '모음',
+            leading: Text(
+              'ㅏ',
+              style: TextStyle(fontSize: 24, color: iconColor),
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -33,8 +36,11 @@ class LearnHangulHomePage extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           LiquidGlassButton(
-            label: '자음 리듬 익히기',
-            leading: Icon(Icons.graphic_eq_rounded, color: iconColor),
+            label: '자음',
+            leading: Text(
+              'ㄱ',
+              style: TextStyle(fontSize: 24, color: iconColor),
+            ),
             onPressed: () {
               Navigator.push(
                 context,
@@ -46,19 +52,17 @@ class LearnHangulHomePage extends StatelessWidget {
             variant: LiquidGlassButtonVariant.secondary,
           ),
           const SizedBox(height: 28),
-LearnHangulListTile(
-                  title: '학습 환경 설정',
-                  subtitle: '목표 달성 리마인더와 테마',
-                  leading: const Icon(Icons.tune_rounded),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const SettingsScreen(),
-                      ),
-                    );
-                  },
-                ),
+          LearnHangulListTile(
+            title: '학습 환경 설정',
+            subtitle: '목표 달성 리마인더와 테마',
+            leading: const Icon(Icons.tune_rounded),
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+          ),
         ],
       ),
     );

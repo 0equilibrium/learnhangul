@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:learnhangul/liquid_glass_buttons.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 const Color seedColor = Color(0xFFEF476F);
 const Color accentColor = Color(0xFFFFC857);
@@ -36,7 +37,7 @@ class LearnHangulPalette extends ThemeExtension<LearnHangulPalette> {
 
   factory LearnHangulPalette.light() {
     return const LearnHangulPalette(
-      background: Colors.white,
+      background: Color(0xFFF5F5F7),
       surface: Color(0xFFF8F8F8),
       elevatedSurface: Color(0xFFFFFFFF),
       outline: Color(0x1A000000),
@@ -44,7 +45,7 @@ class LearnHangulPalette extends ThemeExtension<LearnHangulPalette> {
       secondaryText: Color(0xFF2E2E2E),
       mutedText: Color(0xFF6E6E73),
       success: Color(0xFF2DCA72),
-      warning: Color(0xFFFFA24C),
+      warning: Colors.blue,
       danger: Color(0xFFEF476F),
       info: Color(0xFF569AFD),
     );
@@ -60,7 +61,7 @@ class LearnHangulPalette extends ThemeExtension<LearnHangulPalette> {
       secondaryText: Color(0xFFE5E5EA),
       mutedText: Color(0xFF8E8E93),
       success: Color(0xFF2DCA72),
-      warning: Color(0xFFFFA24C),
+      warning: Colors.blue,
       danger: Color(0xFFF5556D),
       info: Color(0xFFA6C5FF),
     );
@@ -336,13 +337,6 @@ class LiquidGlassButton extends StatelessWidget {
     final typography = LearnHangulTheme.typographyOf(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final gradient = LinearGradient(
-      colors: _gradientForVariant(palette, isDark),
-      begin: Alignment.topLeft,
-      end: Alignment.bottomRight,
-    );
-
-    final borderColor = _borderColorForVariant(palette);
     final textColor = variant == LiquidGlassButtonVariant.primary
         ? palette.primaryText
         : palette.secondaryText;
@@ -359,6 +353,15 @@ class LiquidGlassButton extends StatelessWidget {
       padding: EdgeInsets.zero,
       onPressed: onPressed,
       child: Container(
+        decoration: BoxDecoration(
+          border: Border.all(
+            color: isDark
+                ? Colors.white.withOpacity(0.03)
+                : Colors.white.withOpacity(0.4),
+            width: 2,
+          ),
+          borderRadius: BorderRadius.circular(36),
+        ),
         width: expand ? double.infinity : null,
         padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
         child: Row(
@@ -378,58 +381,17 @@ class LiquidGlassButton extends StatelessWidget {
       ),
     );
 
-    return DecoratedBox(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(28),
-        gradient: gradient,
-        border: Border.all(color: borderColor),
-        boxShadow: [
-          BoxShadow(
-            color: palette.primaryText.withOpacity(isDark ? 0.25 : 0.08),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
-          ),
-        ],
+    return LiquidGlassLayer(
+      settings: LiquidGlassSettings(
+        thickness: 5,
+        glassColor: isDark ? const Color(0x1AFFFFFF) : const Color(0x33FFFFFF),
+        lightIntensity: 1.5,
       ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(28),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
-          child: content,
-        ),
+      child: LiquidGlass(
+        shape: LiquidRoundedRectangle(borderRadius: 28.0),
+        child: content,
       ),
     );
-  }
-
-  List<Color> _gradientForVariant(LearnHangulPalette palette, bool isDark) {
-    switch (variant) {
-      case LiquidGlassButtonVariant.primary:
-        return [
-          Colors.white.withOpacity(isDark ? 0.12 : 0.7),
-          Colors.white.withOpacity(isDark ? 0.06 : 0.4),
-        ];
-      case LiquidGlassButtonVariant.secondary:
-        return [
-          palette.elevatedSurface.withOpacity(isDark ? 0.5 : 0.9),
-          palette.surface.withOpacity(isDark ? 0.6 : 0.7),
-        ];
-      case LiquidGlassButtonVariant.ghost:
-        return [
-          palette.background.withOpacity(0.4),
-          palette.background.withOpacity(0.2),
-        ];
-    }
-  }
-
-  Color _borderColorForVariant(LearnHangulPalette palette) {
-    switch (variant) {
-      case LiquidGlassButtonVariant.primary:
-        return palette.outline.withOpacity(0.6);
-      case LiquidGlassButtonVariant.secondary:
-        return palette.outline.withOpacity(0.4);
-      case LiquidGlassButtonVariant.ghost:
-        return palette.outline.withOpacity(0.2);
-    }
   }
 }
 
@@ -780,10 +742,16 @@ class LearnHangulSurface extends StatelessWidget {
 }
 
 class LearnHangulAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const LearnHangulAppBar(this.title, {super.key, this.showLeading = true});
+  const LearnHangulAppBar(
+    this.title, {
+    super.key,
+    this.showLeading = true,
+    this.trailing,
+  });
 
   final String title;
   final bool showLeading;
+  final Widget? trailing;
 
   @override
   Size get preferredSize => const Size.fromHeight(kToolbarHeight);
@@ -810,6 +778,7 @@ class LearnHangulAppBar extends StatelessWidget implements PreferredSizeWidget {
               onPressed: () => Navigator.pop(context),
             )
           : null,
+      actions: trailing == null ? null : [trailing!],
     );
   }
 }

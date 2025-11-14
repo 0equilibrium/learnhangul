@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:liquid_glass_renderer/liquid_glass_renderer.dart';
 
 import 'design_system.dart';
 import 'home_page.dart';
@@ -12,13 +13,15 @@ class LearnHangulApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'LearnHangul',
-      debugShowCheckedModeBanner: false,
-      themeMode: ThemeMode.system,
-      theme: LearnHangulTheme.light(),
-      darkTheme: LearnHangulTheme.dark(),
-      home: const LearnHangulHomePage(),
+    return LiquidGlassLayer(
+      child: MaterialApp(
+        title: 'LearnHangul',
+        debugShowCheckedModeBanner: false,
+        themeMode: ThemeMode.system,
+        theme: LearnHangulTheme.light(),
+        darkTheme: LearnHangulTheme.dark(),
+        home: const LearnHangulHomePage(),
+      ),
     );
   }
 }
